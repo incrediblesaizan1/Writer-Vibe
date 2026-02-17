@@ -74,7 +74,9 @@ export default function ProfilePage() {
     <div className="w-full min-h-screen text-white relative custom-scrollbar">
       <div
         className="absolute inset-0 bg-cover bg-no-repeat bg-right-top brightness-[0.3] z-0"
-        style={{ backgroundImage: `url('/images/walpaper/${walpaper}')` }}
+        style={{
+          backgroundImage: `url('/images/walpaper/${walpaper || "8705b956-9dc9-4577-beb2-38b6a66c7b85.jpg"}')`,
+        }}
       ></div>
 
       <div className="relative z-10">
