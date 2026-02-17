@@ -1,25 +1,17 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import dbConnect from "@/lib/db";
-import Post from "@/lib/models/post.model";
-import User from "@/lib/models/user.model";
-import { formatDate } from "@/lib/utils";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default async function FeedPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token");
+export default function FeedPage() {
+  const router = useRouter();
 
-  if (token) {
-    redirect("/feed/loggedin");
-  }
-
-  await dbConnect();
-  const posts = JSON.parse(
-    JSON.stringify(await Post.find().populate("user").lean()),
-  );
-  const reversedPosts = [...posts].reverse();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/feed/loggedin");
+    }
+  }, [router]);
 
   return (
     <div className="overflow-auto min-h-screen text-white relative m-0 custom-scrollbar">
@@ -51,33 +43,6 @@ export default async function FeedPage() {
             <span className="text-3xl text-blue-300">Writes</span>~
           </h1>
         </div>
-        {/* <div className="posts overflow-hidden">
-          <div className="flex flex-wrap w-full -mx-0 sm:mx-2">
-            {reversedPosts.map((post) => (
-              <div
-                key={post._id}
-                className="post mb-4 sm:m-2 border rounded-lg min-h-40 max-h-56 w-full sm:w-[48%] lg:w-[32%] flex flex-col"
-              >
-                <div className="flex justify-between p-2">
-                  <div className="flex items-center">
-                    <img
-                      className="w-[32px] h-[32px] rounded-full object-cover mr-1"
-                      src={`/images/uploads/${post.user.dp}`}
-                      alt="user"
-                    />
-                    <h5 className="text-blue-500">@{post.user.username}</h5>
-                  </div>
-                  <h5 className="text-gray-500 text-xs sm:text-sm">
-                    {formatDate(post.date)}
-                  </h5>
-                </div>
-                <div className="overflow-auto flex-grow p-2 custom-scrollbar2">
-                  <p className="tracking-tighter">{post.content}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div> */}
       </div>
     </div>
   );

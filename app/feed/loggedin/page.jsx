@@ -1,32 +1,70 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import dbConnect from "@/lib/db";
-import Post from "@/lib/models/post.model";
-import User from "@/lib/models/user.model";
-import { verifyToken } from "@/lib/auth";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getFeedData, likePost } from "@/lib/actions";
 import { formatDate } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export default function FeedLoggedInPage() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function FeedLoggedInPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token");
+  useEffect(() => {
+    async function fetchData() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
 
-  if (!token) {
-    redirect("/login");
+      const res = await getFeedData(token);
+      if (res.success) {
+        setUser(res.user);
+        setPosts(res.posts.reverse());
+      } else {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/login");
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, [router]);
+
+  async function handleLike(postId) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const res = await likePost(postId, token);
+    if (res.success) {
+      // Refresh feed to show updated likes
+      const dataRes = await getFeedData(token);
+      if (dataRes.success) {
+        setPosts(dataRes.posts.reverse());
+      }
+    } else {
+      alert("Failed to like post");
+    }
   }
 
-  const data = verifyToken(token.value);
-  if (!data) redirect("/login");
+  function handleLogout(e) {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.push("/login"); // or feed? Original was redirect to feed?
+    // Original logout api redirected to /feed.
+    // But /feed redirects to /feed/loggedin if token exists.
+    // If we clear token, /feed is fine.
+    router.push("/feed");
+  }
 
-  await dbConnect();
-  const posts = JSON.parse(
-    JSON.stringify(await Post.find().populate("user").lean()),
-  );
-  const user = JSON.parse(
-    JSON.stringify(await User.findOne({ email: data.email }).lean()),
-  );
-  const reversedPosts = [...posts].reverse();
+  if (loading) return <div className="text-white p-10">Loading...</div>;
+  if (!user) return null;
 
   return (
     <div className="overflow-x-hidden overflow-y-auto min-h-screen text-white relative m-0">
@@ -42,12 +80,12 @@ export default async function FeedLoggedInPage() {
               >
                 Profile
               </a>
-              <a
-                href="/api/logout"
+              <button
+                onClick={handleLogout}
                 className="bg-red-500 rounded-md px-4 py-2 text-sm sm:text-base sm:mt-0 lg:mt-2"
               >
                 Log-Out
-              </a>
+              </button>
             </div>
           </nav>
           <hr className="border-t border-gray-600 mx-5 sm:mt-[-34px] sm:ml-40 sm:mr-52 lg:mt-[-2.5rem]" />
@@ -60,7 +98,7 @@ export default async function FeedLoggedInPage() {
         </div>
         <div className="posts">
           <div className="flex flex-wrap w-full -mx-0 sm:mx-2">
-            {reversedPosts.map((post) => (
+            {posts.map((post) => (
               <div
                 key={post._id}
                 className="post mb-4 sm:m-2 border rounded-lg min-h-40 max-h-56 w-full sm:w-[48%] lg:w-[32%] flex flex-col custom-scrollbar2"
@@ -82,20 +120,23 @@ export default async function FeedLoggedInPage() {
                   <p className="tracking-tighter">{post.content}</p>
                 </div>
                 <div className="flex justify-between bg-transparent rounded-bl-md rounded-br-md p-2 border-t mt-auto">
-                  <a className="flex gap-1" href={`/api/like/${post._id}`}>
+                  <button
+                    className="flex gap-1"
+                    onClick={() => handleLike(post._id)}
+                  >
                     <span className="relative bottom-1">
                       {post.likes.length}
                     </span>
                     <img
                       className="w-[19px] h-[19px]"
                       src={
-                        post.likes.indexOf(user._id) !== -1
+                        post.likes.indexOf(user?._id) !== -1
                           ? "/images/uploads/like.svg"
                           : "/images/uploads/unlike.svg"
                       }
                       alt=""
                     />
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}

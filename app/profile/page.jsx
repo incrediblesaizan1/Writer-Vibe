@@ -1,42 +1,74 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import fs from "fs";
-import path from "path";
-import dbConnect from "@/lib/db";
-import User from "@/lib/models/user.model";
-import Post from "@/lib/models/post.model";
-import { verifyToken } from "@/lib/auth";
-import { createPost } from "@/lib/actions";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getProfileData, createPost, deletePost } from "@/lib/actions";
 import { formatDate } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export default function ProfilePage() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [walpaper, setWalpaper] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-export default async function ProfilePage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token");
+  useEffect(() => {
+    async function fetchData() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
 
-  if (!token) {
-    redirect("/login");
+      const res = await getProfileData(token);
+      if (res.success) {
+        setUser(res.user);
+        setWalpaper(res.walpaper);
+      } else {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/login");
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, [router]);
+
+  async function handleCreatePost(e) {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const formData = new FormData(e.target);
+    formData.append("token", token);
+
+    const res = await createPost(formData);
+    if (res.success) {
+      // Re-fetch data to show new post
+      const dataRes = await getProfileData(token);
+      if (dataRes.success) {
+        setUser(dataRes.user);
+      }
+      e.target.reset(); // Clear form
+    } else {
+      alert("Failed to create post");
+    }
   }
 
-  const data = verifyToken(token.value);
-  if (!data) redirect("/login");
+  function handleLogout(e) {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.push("/login");
+  }
 
-  await dbConnect();
-  const user = JSON.parse(
-    JSON.stringify(
-      await User.findOne({
-        $or: [{ email: data.email }, { username: data.username }],
-      }).populate("post"),
-    ),
-  );
+  if (loading) {
+    return <div className="text-white p-10">Loading...</div>;
+  }
 
-  // Get random wallpaper
-  const walpaperDir = path.join(process.cwd(), "public", "images", "walpaper");
-  const files = fs.readdirSync(walpaperDir);
-  const walpaper = files[Math.floor(Math.random() * files.length)];
-
-  const reversedPosts = [...user.post].reverse();
+  if (!user) return null; // Should redirect
 
   return (
     <div className="w-full min-h-screen text-white relative custom-scrollbar">
@@ -56,12 +88,12 @@ export default async function ProfilePage() {
               >
                 Writes
               </a>
-              <a
-                href="/api/logout"
+              <button
+                onClick={handleLogout}
                 className="bg-red-500 rounded-md px-4 py-2 text-sm sm:text-base sm:mt-0 lg:mt-2"
               >
                 Logout
-              </a>
+              </button>
             </div>
           </nav>
           <hr className="border-t border-gray-600 mx-5 sm:mt-[-34px] sm:ml-40 sm:mr-52 lg:mt-[-2.5rem]" />
@@ -87,13 +119,14 @@ export default async function ProfilePage() {
 
           <h5 className="mb-5 text-xl text-gray-400">You can create a post.</h5>
 
-          <form action={createPost}>
+          <form onSubmit={handleCreatePost}>
             <textarea
               placeholder="What's on your mind?"
               className="p-3 bg-transparent border block outline-none resize-none w-full sm:w-1/3"
               rows="5"
               cols="30"
               name="content"
+              required
             ></textarea>
             <input
               type="submit"
@@ -107,7 +140,7 @@ export default async function ProfilePage() {
             <hr className="mb-6 border-t border-gray-600 sm:ml-32" />
 
             <div className="flex flex-wrap w-full -mx-0 sm:mx-2">
-              {reversedPosts.map((post) => (
+              {user.post.map((post) => (
                 <div
                   key={post._id}
                   className="post mb-4 sm:m-2 border rounded-lg min-h-40 max-h-56 w-full sm:w-[48%] lg:w-[32%] flex flex-col"
@@ -122,12 +155,27 @@ export default async function ProfilePage() {
                     <p className="tracking-tighter mb-2">{post.content}</p>
                   </div>
                   <div className="flex justify-between p-2 border-t mt-auto">
-                    <a
-                      href={`/api/delete/${post._id}`}
+                    <button
+                      onClick={async () => {
+                        if (
+                          confirm("Are you sure you want to delete this post?")
+                        ) {
+                          const token = localStorage.getItem("token");
+                          if (token) {
+                            const res = await deletePost(post._id, token);
+                            if (res.success) {
+                              const dataRes = await getProfileData(token);
+                              if (dataRes.success) setUser(dataRes.user);
+                            } else {
+                              alert("Failed to delete post");
+                            }
+                          }
+                        }
+                      }}
                       className="text-red-500 font-semibold"
                     >
                       Delete
-                    </a>
+                    </button>
                     <a
                       href={`/edit/${post._id}`}
                       className="text-gray-500 font-bold"

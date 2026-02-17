@@ -1,25 +1,58 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import dbConnect from "@/lib/db";
-import User from "@/lib/models/user.model";
-import { verifyToken } from "@/lib/auth";
-import { uploadDp } from "@/lib/actions";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { uploadDp, getProfileData } from "@/lib/actions";
 
-export default async function UploadPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token");
+export default function UploadPage() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!token) redirect("/login");
+  useEffect(() => {
+    async function fetchData() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
 
-  const data = verifyToken(token.value);
-  if (!data) redirect("/login");
+      const res = await getProfileData(token);
+      if (res.success) {
+        setUser(res.user);
+      } else {
+        router.push("/login");
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, [router]);
 
-  await dbConnect();
-  const user = JSON.parse(
-    JSON.stringify(await User.findOne({ email: data.email }).lean()),
-  );
+  async function handleUpload(e) {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const formData = new FormData(e.target);
+    formData.append("token", token);
+
+    const res = await uploadDp(formData);
+    if (res.success) {
+      // Refresh to show new image
+      const dataRes = await getProfileData(token);
+      if (dataRes.success) {
+        setUser(dataRes.user);
+      }
+    } else {
+      alert("Upload failed");
+    }
+  }
+
+  if (loading) return <div className="text-white p-10">Loading...</div>;
+  if (!user) return null;
 
   return (
     <div className="w-full min-h-screen text-white bg-[url('/images/download.svg')] bg-cover bg-center h-screen">
@@ -47,13 +80,18 @@ export default async function UploadPage() {
           Upload Profile Picture
         </h1>
         <form
-          action={uploadDp}
+          onSubmit={handleUpload}
           className="flex justify-center items-center"
           encType="multipart/form-data"
         >
-          <input type="file" name="image" className="w-24 lg:w-[50%]" />
           <input
-            className="px-5 py-2 my-1 w-32 rounded-md bg-blue-500"
+            type="file"
+            name="image"
+            className="w-24 lg:w-[50%]"
+            required
+          />
+          <input
+            className="px-5 py-2 my-1 w-32 rounded-md bg-blue-500 cursor-pointer"
             type="submit"
             value="Upload Image"
           />
