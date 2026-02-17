@@ -3,12 +3,16 @@
 import { registerUser } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Loader from "@/components/Loader";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData) {
+    setLoading(true);
+    setError("");
     const res = await registerUser(formData);
     if (res.success) {
       localStorage.setItem("token", res.token);
@@ -16,11 +20,13 @@ export default function RegisterPage() {
       router.push("/profile");
     } else {
       setError(res.error || "Registration failed");
+      setLoading(false);
     }
   }
 
   return (
     <div className="overflow-auto min-h-screen text-white relative m-0">
+      {loading && <Loader />}
       <div className="absolute inset-0 w-full bg-[url('/images/walpaper/99961c08-17f1-4c4b-9cca-4fcb39f1b6dd.jpg')] bg-cover bg-no-repeat bg-right-top brightness-[0.3] z-0"></div>
       <div className="relative z-10">
         <header>

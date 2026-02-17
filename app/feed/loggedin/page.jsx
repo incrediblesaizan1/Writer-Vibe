@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getFeedData, likePost } from "@/lib/actions";
 import { formatDate } from "@/lib/utils";
+import Loader from "@/components/Loader";
 
 export default function FeedLoggedInPage() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function FeedLoggedInPage() {
     router.push("/feed");
   }
 
-  if (loading) return <div className="text-white p-10">Loading...</div>;
+  if (loading) return <Loader />;
   if (!user) return null;
 
   return (

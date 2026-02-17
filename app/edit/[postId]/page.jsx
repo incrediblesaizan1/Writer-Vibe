@@ -3,6 +3,7 @@
 import { useRouter, useParams } from "next/navigation"; // useParams is better for client components usually
 import { useEffect, useState, use } from "react";
 import { getPost, editPost } from "@/lib/actions";
+import Loader from "@/components/Loader";
 
 export default function EditPage({ params }) {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function EditPage({ params }) {
     }
   }
 
-  if (loading) return <div className="text-white p-10">Loading...</div>;
+  if (loading) return <Loader />;
   if (!post) return null;
 
   return (

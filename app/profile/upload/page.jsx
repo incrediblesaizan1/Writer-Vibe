@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { uploadDp, getProfileData } from "@/lib/actions";
+import Loader from "@/components/Loader";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function UploadPage() {
     }
   }
 
-  if (loading) return <div className="text-white p-10">Loading...</div>;
+  if (loading) return <Loader />;
   if (!user) return null;
 
   return (

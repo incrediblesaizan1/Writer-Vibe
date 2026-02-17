@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getProfileData, createPost, deletePost } from "@/lib/actions";
 import { formatDate } from "@/lib/utils";
+import Loader from "@/components/Loader";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <div className="text-white p-10">Loading...</div>;
+    return <Loader />;
   }
 
   if (!user) return null; // Should redirect

@@ -3,12 +3,16 @@
 import { loginUser } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Loader from "@/components/Loader";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData) {
+    setLoading(true);
+    setError("");
     const res = await loginUser(formData);
     if (res.success) {
       localStorage.setItem("token", res.token);
@@ -16,11 +20,13 @@ export default function LoginPage() {
       router.push("/profile");
     } else {
       setError(res.error || "Login failed");
+      setLoading(false);
     }
   }
 
   return (
     <div className="overflow-auto min-h-screen text-white relative m-0">
+      {loading && <Loader />}
       <div className="absolute inset-0 w-full bg-[url('/images/walpaper/08b89e75-c03a-41aa-9cb6-d3dd822cdfbe.jpg')] bg-cover bg-no-repeat bg-right-top brightness-[0.4] z-0"></div>
       <div className="relative z-10">
         <header>
