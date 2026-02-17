@@ -40,20 +40,6 @@ export default function LoginPage() {
               name="password"
               placeholder="Password"
             />
-            <div className="flex items-center gap-2 my-2 w-[90%] lg:w-2/3">
-              <input
-                type="checkbox"
-                name="remember"
-                id="remember"
-                className="w-4 h-4 cursor-pointer"
-              />
-              <label
-                htmlFor="remember"
-                className="text-sm cursor-pointer select-none"
-              >
-                Remember me
-              </label>
-            </div>
             <input
               className="px-5 py-2 my-1 w-32 rounded-md bg-yellow-500"
               type="submit"
