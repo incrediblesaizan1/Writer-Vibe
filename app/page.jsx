@@ -43,7 +43,7 @@ export default async function HomePage() {
           </h1>
         </div>
         <div className="posts overflow-hidden">
-          <div className="flex flex-wrap w-full -mx-0 sm:mx-2">
+          {/* <div className="flex flex-wrap w-full -mx-0 sm:mx-2">
             {reversedPosts.map((post) => (
               <div
                 key={post._id}
@@ -67,7 +67,7 @@ export default async function HomePage() {
                 </div>
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

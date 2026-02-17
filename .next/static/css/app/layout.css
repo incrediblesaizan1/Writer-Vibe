@@ -956,6 +956,7 @@ video {
   --tw-brightness: brightness(0.4);
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
+
 @media (min-width: 640px) {
 
   .sm\:m-2 {
@@ -1026,6 +1027,7 @@ video {
     line-height: 1.25rem;
   }
 }
+
 @media (min-width: 1024px) {
 
   .lg\:top-12 {
