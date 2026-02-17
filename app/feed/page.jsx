@@ -51,7 +51,7 @@ export default async function FeedPage() {
             <span className="text-3xl text-blue-300">Writes</span>~
           </h1>
         </div>
-        <div className="posts overflow-hidden">
+        {/* <div className="posts overflow-hidden">
           <div className="flex flex-wrap w-full -mx-0 sm:mx-2">
             {reversedPosts.map((post) => (
               <div
@@ -77,7 +77,7 @@ export default async function FeedPage() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
